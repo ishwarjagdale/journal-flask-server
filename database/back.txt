@@ -1,0 +1,51 @@
+from flask_sqlalchemy import SQLAlchemy
+from uuid import uuid4
+
+db = SQLAlchemy()
+
+
+class USERS(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    email = db.Column(db.String(80), nullable=False, unique=True)
+    password = db.Column(db.String(80), nullable=False)
+
+    def __repr__(self):
+        return f"User: {self.name} ({self.email})"
+
+    def register(self, name, email, password):
+        user = USERS(id=uuid4(), name=name, email=email, password=password)
+        try:
+            db.session.add(user)
+        except Exception as e:
+            print(e)
+
+
+from sqlalchemy import create_engine, Column, String, Integer, Sequence
+from sqlalchemy.orm import declarative_base, sessionmaker
+from flask import current_app as app
+
+
+Base = declarative_base()
+
+
+class USERS(Base):
+    __tablename__ = "USERS"
+
+    id = Column(Integer, primary_key=True, unique=True, default=Sequence('user_id_seq'))
+    name = Column(String(80), nullable=False)
+    email = Column(String(80), nullable=False, unique=True)
+    password = Column(String(80), nullable=False)
+
+    def __repr__(self):
+        return f"User: {self.name} ({self.email})"
+
+
+
+engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+Base.metadata.create_all(bind=engine, checkfirst=True)
+
+Session = sessionmaker(bind=engine)
+db = Session()
+
+
