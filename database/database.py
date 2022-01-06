@@ -71,6 +71,10 @@ class Users(UserMixin, db.Model):
         return Users.get(user_id)
 
 
+def default_date_modified(context):
+    return context.get_current_parameters()["date_published"]
+
+
 class Posts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(1000), nullable=False)
@@ -83,7 +87,7 @@ class Posts(db.Model):
     thumbnail_image = db.Column(db.String(1000), nullable=True,
                                 default="/img/thumbnail.png")
     date_published = db.Column(db.DateTime, nullable=False)
-    date_modified = db.Column(db.DateTime, default=date_published,
+    date_modified = db.Column(db.DateTime, default=default_date_modified,
                               nullable=False, onupdate=datetime.datetime.now())
     tags = db.Column(db.String(1000), nullable=True)
     views = db.Column(db.Integer, default=0)
@@ -135,7 +139,8 @@ class Posts(db.Model):
     def new_post(title, subtitle, content, author, thumbnail_image, tags):
         try:
             post = Posts(title=title, subtitle=subtitle, author=author, content=content,
-                         thumbnail_image=thumbnail_image, tags=tags, date_published=datetime.datetime.now())
+                         thumbnail_image=thumbnail_image, tags=tags, date_published=datetime.datetime.now(),
+                         date_modified=datetime.datetime.now())
             db.session.add(post)
             db.session.commit()
         except SQLAlchemyError as e:
