@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
 from database.database import Users, Posts, db
-from flask_login import login_required, current_user
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
@@ -13,18 +12,6 @@ def home():
 @api.route("/user/<username>", methods=["GET", "POST"])
 def get_user(username):
     return jsonify({"resp_code": 200, "response": Users.get_user_by_username(username).json()})
-
-
-@api.route("/settings", methods=["GET", "POST"])
-@login_required
-def setting():
-    if request.method == "POST":
-        data = dict(request.get_json())
-        print(data)
-        Users.update(current_user.id, data)
-
-        return jsonify(True)
-    return jsonify({"resp_code": 200, "response": "userSettings", "settings": current_user.json()})
 
 
 @api.route("/new-story", methods=["POST"])

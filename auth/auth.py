@@ -64,3 +64,15 @@ def logout():
 def secure():
     print("accessed")
     return jsonify("SECURE!")
+
+
+@toAuth.route("/settings", methods=["GET", "POST"])
+@login_required
+def setting():
+    if request.method == "POST":
+        data = dict(request.get_json())
+        print(data)
+        Users.update(current_user.id, data)
+
+        return jsonify(True)
+    return jsonify({"resp_code": 200, "response": "userSettings", "settings": current_user.json()})
