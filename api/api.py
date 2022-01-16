@@ -1,7 +1,10 @@
 from flask import Blueprint, request, jsonify
 from database.database import Users, Posts, db
+from flask_session import Session
 
 api = Blueprint('api', __name__, url_prefix='/api')
+
+session = Session()
 
 
 @api.route('/')
@@ -9,9 +12,13 @@ def home():
     return "HELLO from api!"
 
 
-@api.route("/user/<username>", methods=["GET", "POST"])
+@api.route("/user/<username>")
 def get_user(username):
-    return jsonify({"resp_code": 200, "response": Users.get_user_by_username(username).json()})
+    user = Users.get_user_by_username(username).json()
+    posts = Users.query.with_entities(Posts.id).filter_by(author=user["id"]).all()
+    print(posts)
+    user["posts"] = [x[0] for x in posts]
+    return jsonify({"resp_code": 200, "response": user})
 
 
 @api.route("/new-story", methods=["POST"])
@@ -42,3 +49,13 @@ def get_post(post_id):
         return jsonify({"resp_code": 200, "response": post})
     else:
         return jsonify({"resp_code": 404, "response": "noPostFound"})
+
+
+@api.route("/post/<post_id>/like")
+def like_post(post_id):
+    post = Posts.query.filter_by(id=int(post_id)).first()
+    if post:
+        post.increlike()
+        return jsonify({"resp_code": 200, "likes": post.likes})
+
+    return jsonify({"resp_code": 400})

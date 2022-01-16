@@ -59,7 +59,7 @@ class Users(UserMixin, db.Model):
 
     @staticmethod
     def get_user_by_username(username):
-        return Users.query.filter_by(id=int(username.split("_")[1])).first()
+        return Users.query.filter_by(username=username).first()
 
     @staticmethod
     def update(user_id: int, settings: dict):
@@ -131,8 +131,8 @@ class Posts(db.Model):
         self.views += 1
         db.session.commit()
 
-    def like(self):
-        self.like += 1
+    def increlike(self):
+        self.likes += 1
         db.session.commit()
 
     @staticmethod
