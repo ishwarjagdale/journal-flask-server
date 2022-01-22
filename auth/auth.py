@@ -59,16 +59,22 @@ def logout():
     return jsonify({"resp_code": 200, "response": "userLoggedOut"})
 
 
-@toAuth.route("/secure")
+@toAuth.route("/secure", methods=["GET", "POST"])
 @login_required
 def secure():
+    if request.method == "POST":
+        if dict(request.get_json())["userId"] == current_user.id:
+            return jsonify({"resp_code": 200})
+        else:
+            return jsonify({"resp_code": 400})
     print("accessed")
-    return jsonify("SECURE!")
+    return jsonify({"resp_code": 200, "response": current_user.json()})
 
 
 @toAuth.route("/settings", methods=["GET", "POST"])
 @login_required
 def setting():
+    print(current_user.email)
     if request.method == "POST":
         data = dict(request.get_json())
         print(data)

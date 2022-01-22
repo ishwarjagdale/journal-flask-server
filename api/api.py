@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from database.database import Users, Posts, db
 from flask_session import Session
+from flask_login import login_required
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
@@ -22,6 +23,7 @@ def get_user(username):
 
 
 @api.route("/new-story", methods=["POST"])
+@login_required
 def new_post():
     data: dict = dict(request.get_json())
     status = Posts.new_post(
