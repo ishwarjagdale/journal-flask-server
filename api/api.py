@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
-from database.database import Users, Posts, db
+from database.database import Users, Posts, db, Followers, SQLAlchemyError
 from flask_session import Session
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
@@ -19,6 +19,7 @@ def get_user(username):
     posts = Users.query.with_entities(Posts.id).filter_by(author=user["id"]).all()
     print(posts)
     user["posts"] = [x[0] for x in posts]
+    user["followers"] = Followers.get_count(user["id"])
     return jsonify({"resp_code": 200, "response": user})
 
 
@@ -61,3 +62,29 @@ def like_post(post_id):
         return jsonify({"resp_code": 200, "likes": post.likes})
 
     return jsonify({"resp_code": 400})
+
+
+@api.route("/follow/<follower_id>", methods=["GET", "POST", "DELETE"])
+@login_required
+def check_follow(follower_id):
+    do_follow = Followers.check_follower(int(follower_id), int(current_user.id))
+
+    if request.method == "POST":
+        if not do_follow:
+            do_follow = Followers.add_follower(int(follower_id), int(current_user.id))
+            print(current_user.id, follower_id, do_follow)
+        return jsonify({"resp_code": 200, "response": bool(do_follow)})
+
+    if request.method == "DELETE":
+        if do_follow:
+            try:
+                db.session.delete(do_follow)
+                db.session.commit()
+            except SQLAlchemyError as e:
+                print(e)
+                return jsonify({"resp_code": 200, "response": False})
+            else:
+                return jsonify({"resp_code": 200, "response": False})
+        return jsonify({"resp_code": 200, "response": False})
+
+    return jsonify({"resp_code": 200, "response": bool(do_follow)})

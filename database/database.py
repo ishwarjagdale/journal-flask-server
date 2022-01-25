@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
 from flask_login import UserMixin
 
+
 db = SQLAlchemy()
 
 
@@ -69,6 +70,11 @@ class Users(UserMixin, db.Model):
         print(user.json())
         db.session.commit()
         return Users.get(user_id)
+
+    def get_follow_count(self):
+        count = Followers.query.filter_by(author=self.id).all().count()
+        print(count)
+        return count
 
 
 def default_date_modified(context):
@@ -163,3 +169,43 @@ class Posts(db.Model):
             return False, e.code
         else:
             return True
+
+
+class Followers(db.Model):
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    author = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    follower_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    author_rel = db.relationship("Users", foreign_keys=[author])
+    follower_rel = db.relationship("Users", foreign_keys=[follower_id])
+
+    @staticmethod
+    def get_count(user_id):
+        count = db.session.query(db.func.count(Followers.author)).filter_by(author=user_id).first()
+        print(count)
+        return count[0]
+
+    @staticmethod
+    def add_follower(user_id, follower_id):
+        try:
+            follow = Followers(author=user_id, follower_id=follower_id)
+            db.session.add(follow)
+            db.session.commit()
+        except SQLAlchemyError as e:
+            print(e)
+            return False
+        else:
+            return True
+
+    @staticmethod
+    def check_follower(profile_id, follower_id):
+        try:
+            do_follow = Followers.query.filter_by(author=profile_id, follower_id=follower_id).first()
+            print(do_follow)
+        except SQLAlchemyError as e:
+            print(e)
+            return None
+        else:
+            return do_follow
+
+
