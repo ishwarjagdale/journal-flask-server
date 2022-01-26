@@ -24,9 +24,9 @@ def register_user():
             return jsonify({"resp_code": 200, "response": "userRegistered", "user": user.json()})
         else:
             print("userExists")
-            return jsonify({"resp_code": 200, "response": "userExists"})
+            return jsonify({"resp_code": 500, "response": "userExists"})
     except Exception:
-        return jsonify({"resp_code": 200, "response": "Server Error"})
+        return jsonify({"resp_code": 500, "response": "Server Error"})
 
 
 @toAuth.route("/login", methods=["POST"])
@@ -43,11 +43,11 @@ def login():
                 return jsonify({"resp_code": 200, "response": "userLoggedIn", "user": user.json()})
             else:
                 print("Failed(Wrong Credentials)")
-                return jsonify({"resp_code": 200, "response": "wrong credentials"})
+                return jsonify({"resp_code": 404, "response": "wrong credentials"})
         else:
             print(f"User: {credentials['email']} doesn't exist!")
             return jsonify({"resp_code": 404, "response": "userNotFound"})
-    return jsonify({"resp_code": 200, "response": "Invalid request, missing credentials"})
+    return jsonify({"resp_code": 404, "response": "Invalid request, missing credentials"})
 
 
 @toAuth.route("/logout")
