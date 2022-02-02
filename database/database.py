@@ -81,6 +81,10 @@ def default_date_modified(context):
     return context.get_current_parameters()["date_published"]
 
 
+def default_character_count(context):
+    return len(context.get_current_parameters()["content"])
+
+
 class Posts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(1000), nullable=False)
@@ -98,6 +102,8 @@ class Posts(db.Model):
     tags = db.Column(db.String(1000), nullable=True)
     views = db.Column(db.Integer, default=0)
     likes = db.Column(db.Integer, default=0)
+    character_count = db.Column(db.Integer, default=default_character_count)
+    word_count = db.Column(db.Integer, default=0)
 
     def json(self, complete):
         post = {
@@ -111,7 +117,7 @@ class Posts(db.Model):
             },
             "meta": {
                 "date_published": self.date_published,
-                "read_time": "4 min read",
+                "read_time": self.word_count,
                 "tag": self.tags,
                 "likes": self.likes,
                 "response": self.views
@@ -142,10 +148,10 @@ class Posts(db.Model):
         db.session.commit()
 
     @staticmethod
-    def new_post(title, subtitle, content, author, thumbnail_image, tags):
+    def new_post(title, subtitle, content, author, thumbnail_image, tags, word_count):
         try:
             post = Posts(title=title, subtitle=subtitle, author=author, content=content,
-                         thumbnail_image=thumbnail_image, tags=tags, date_published=datetime.datetime.now(),
+                         thumbnail_image=thumbnail_image, tags=tags, word_count=word_count, date_published=datetime.datetime.now(),
                          date_modified=datetime.datetime.now())
             db.session.add(post)
             db.session.commit()

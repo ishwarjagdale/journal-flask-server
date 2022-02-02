@@ -28,19 +28,30 @@ def get_user(username):
 def new_post():
     data: dict = dict(request.get_json())
     status = Posts.new_post(
-                            title=data["title"],
-                            subtitle=data["subtitle"],
-                            content=data["content"],
-                            author=data["author"],
-                            thumbnail_image=data["thumbnailURL"],
-                            tags=data["tags"]
-                            )
+        title=data["title"],
+        subtitle=data["subtitle"],
+        content=data["content"],
+        author=data["author"],
+        thumbnail_image=data["thumbnailURL"],
+        tags=data["tags"],
+        word_count=data["wordCount"],
+    )
     return jsonify({"resp_code": 200 if status[0] else 400, "response": status[1]})
 
 
 @api.route("/posts")
 def get_posts():
     posts = [p.json(False) for p in Posts.query.join(Posts.author_rel).order_by(db.desc(Posts.date_published)).all()]
+    print(*posts, sep="\n")
+    return jsonify({"resp_code": 200, "response": posts})
+
+
+@api.route("/search")
+def search():
+    query = request.args["query"]
+    posts = [p.json(False) for p in Posts.query.join(Posts.author_rel).filter(Posts.title.ilike(f"%{query}%") | Posts.tags.ilike(f"%{query}%")
+                                                                              ).order_by(db.desc(Posts.date_published
+                                                                                                 )).all()]
     print(*posts, sep="\n")
     return jsonify({"resp_code": 200, "response": posts})
 
