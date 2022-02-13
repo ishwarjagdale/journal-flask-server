@@ -23,7 +23,8 @@ class Users(UserMixin, db.Model):
     email = db.Column(db.String(80), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
     bio = db.Column(db.String(200))
-    image_url = db.Column(db.String(500), default="/img/user.png")
+    image_url = db.Column(db.String(500), default="https://storage.googleapis.com/dotted-tube-339407.appspot.com"
+                                                  "/assets/img/user.png")
     is_authenticated = db.Column(db.Boolean, default=True)
     is_active = db.Column(db.Boolean, default=True)
 
@@ -95,7 +96,8 @@ class Posts(db.Model):
     author_rel = db.relationship("Users", foreign_keys=[author])
 
     thumbnail_image = db.Column(db.String(1000), nullable=True,
-                                default="/img/thumbnail.png")
+                                default="https://storage.googleapis.com/dotted-tube-339407.appspot.com/assets/img"
+                                        "/thumbnail.png")
     date_published = db.Column(db.DateTime, nullable=False)
     date_modified = db.Column(db.DateTime, default=default_date_modified,
                               nullable=False, onupdate=datetime.datetime.now())

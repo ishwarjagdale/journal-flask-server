@@ -42,7 +42,6 @@ def new_post():
 @api.route("/posts")
 def get_posts():
     posts = [p.json(False) for p in Posts.query.join(Posts.author_rel).order_by(db.desc(Posts.date_published)).all()]
-    print(*posts, sep="\n")
     return jsonify({"resp_code": 200, "response": posts})
 
 
@@ -52,7 +51,6 @@ def search():
     posts = [p.json(False) for p in Posts.query.join(Posts.author_rel).filter(Posts.title.ilike(f"%{query}%") | Posts.tags.ilike(f"%{query}%")
                                                                               ).order_by(db.desc(Posts.date_published
                                                                                                  )).all()]
-    print(*posts, sep="\n")
     return jsonify({"resp_code": 200, "response": posts})
 
 
@@ -83,7 +81,6 @@ def check_follow(follower_id):
     if request.method == "POST":
         if not do_follow:
             do_follow = Followers.add_follower(int(follower_id), int(current_user.id))
-            print(current_user.id, follower_id, do_follow)
         return jsonify({"resp_code": 200, "response": bool(do_follow)})
 
     if request.method == "DELETE":

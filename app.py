@@ -6,6 +6,7 @@ from flask_cors import CORS
 from auth.auth import toAuth
 from os import environ
 from api.api import session
+from Storage.storage import statics
 
 app = Flask(__name__)
 cors = CORS(origins=environ["FRONTEND_SERVER"], supports_credentials=True)
@@ -22,6 +23,7 @@ with app.app_context():
 
     app.register_blueprint(api)
     app.register_blueprint(toAuth)
+    app.register_blueprint(statics)
 
 if __name__ == "__main__":
     app.run(host="localhost", port=5000, debug=True)
