@@ -67,7 +67,7 @@ class Users(UserMixin, db.Model):
     def update(user_id: int, settings: dict):
         user = Users.query.filter_by(id=user_id).first()
         for key in settings.keys():
-            setattr(user, settings[key][0], settings[key][1])
+            setattr(user, key, settings[key])
         print(user.json())
         db.session.commit()
         return Users.get(user_id)

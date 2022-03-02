@@ -18,14 +18,15 @@ def register_user():
         data = dict(request.get_json())
         print(f"New user: {data['name']} ({data['email']}) registering...", end="")
         user = Users.register(data["name"], data["email"], data["password"])
-        print("registered...", end="")
         if user[0]:
+            print("registered...", end="")
             print("OK")
-            return jsonify({"resp_code": 200, "response": "userRegistered", "user": user.json()})
+            return jsonify({"resp_code": 200, "response": "userRegistered", "user": user[1].json()})
         else:
             print("userExists")
             return jsonify({"resp_code": 500, "response": "userExists"})
-    except Exception:
+    except Exception as e:
+        print(e)
         return jsonify({"resp_code": 500, "response": "Server Error"})
 
 
