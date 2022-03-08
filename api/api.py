@@ -96,3 +96,25 @@ def check_follow(follower_id):
         return jsonify({"resp_code": 200, "response": False})
 
     return jsonify({"resp_code": 200, "response": bool(do_follow)})
+
+
+@api.route("/saved", methods=["GET", "POST"])
+def saved():
+    stories = []
+    if "stories" in request.args.keys():
+        try:
+            ids = list(map(lambda x: int(x), request.args["stories"].split(" ")))
+        except Exception as e:
+            print(e)
+        else:
+            try:
+                for _id in ids:
+                    stories.append(Posts.get_post(_id).json())
+            except SQLAlchemyError as e:
+                print(e)
+        finally:
+            if current_user:
+                print(current_user.email)
+            else:
+                print("not a user")
+    return jsonify({"resp_code": 200, "response": stories})

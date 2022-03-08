@@ -107,7 +107,7 @@ class Posts(db.Model):
     character_count = db.Column(db.Integer, default=default_character_count)
     word_count = db.Column(db.Integer, default=0)
 
-    def json(self, complete):
+    def json(self, complete=False):
         post = {
             "id": self.id,
             "title": self.title,
