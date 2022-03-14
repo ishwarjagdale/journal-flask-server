@@ -15,7 +15,7 @@ def home():
 
 @api.route("/user/<username>")
 def get_user(username):
-    user = Users.get_user_by_username(username).json()
+    user = Users.get_user_by_username(username).json(complete=True)
     posts = Users.query.with_entities(Posts.id).filter_by(author=user["id"]).all()
     print(posts)
     user["posts"] = [x[0] for x in posts]

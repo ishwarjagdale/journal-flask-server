@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
 from flask_login import UserMixin
 
-
 db = SQLAlchemy()
 
 
@@ -25,11 +24,13 @@ class Users(UserMixin, db.Model):
     bio = db.Column(db.String(200))
     image_url = db.Column(db.String(500), default="https://storage.googleapis.com/dotted-tube-339407.appspot.com"
                                                   "/assets/img/user.png")
+    bg_image_url = db.Column(db.String(500), default="https://storage.googleapis.com/dotted-tube-339407.appspot.com"
+                                                     "/assets/img/user.png")
     is_authenticated = db.Column(db.Boolean, default=True)
     is_active = db.Column(db.Boolean, default=True)
 
-    def json(self):
-        return {
+    def json(self, complete=False):
+        user = {
             "id": self.id,
             "name": self.name,
             "username": self.username,
@@ -37,6 +38,11 @@ class Users(UserMixin, db.Model):
             "email": self.email,
             "image_url": self.image_url
         }
+
+        if complete:
+            user["bg_image_url"] = self.bg_image_url
+
+        return user
 
     @staticmethod
     def register(name, email, password):
@@ -67,8 +73,9 @@ class Users(UserMixin, db.Model):
     def update(user_id: int, settings: dict):
         user = Users.query.filter_by(id=user_id).first()
         for key in settings.keys():
+            print(key, settings[key])
             setattr(user, key, settings[key])
-        print(user.json())
+        print(user.json(complete=True))
         db.session.commit()
         return Users.get(user_id)
 
@@ -128,7 +135,7 @@ class Posts(db.Model):
                 "url": self.thumbnail_image,
                 "caption": self.title,
             },
-            "url": f"/s/{self.title.replace(' ',  '-')}-{self.id}"
+            "url": f"/s/{self.title.replace(' ', '-')}-{self.id}"
         }
         if complete:
             post["content"] = self.content
@@ -153,7 +160,8 @@ class Posts(db.Model):
     def new_post(title, subtitle, content, author, thumbnail_image, tags, word_count):
         try:
             post = Posts(title=title, subtitle=subtitle, author=author, content=content,
-                         thumbnail_image=thumbnail_image, tags=tags, word_count=word_count, date_published=datetime.datetime.now(),
+                         thumbnail_image=thumbnail_image, tags=tags, word_count=word_count,
+                         date_published=datetime.datetime.now(),
                          date_modified=datetime.datetime.now())
             db.session.add(post)
             db.session.commit()
@@ -215,5 +223,3 @@ class Followers(db.Model):
             return None
         else:
             return do_follow
-
-

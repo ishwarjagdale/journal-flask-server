@@ -17,7 +17,7 @@ def upload_file():
     try:
         file = request.files["upload"]
         print(file.content_type)
-        if "fileCat" in request.form.keys() and request.form["fileCat"] == "profileImage":
+        if "fileCat" in request.form.keys() and request.form["fileCat"] in ["profileImage", "bg_image"]:
             filename = request.form.get("fileCat") + ".webp"
         else:
             filename = str(datetime.datetime.utcnow()) + '_' + file.filename[:file.filename.rfind('.') + 1] + 'webp'
@@ -27,7 +27,7 @@ def upload_file():
             os.path.join(os.path.dirname(__file__), os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
         ))
         bucket = Bucket.from_string(os.environ["BUCKET"], client=storage_client)
-        if "fileCat" in request.form.keys() and request.form["fileCat"] == "profileImage":
+        if "fileCat" in request.form.keys() and request.form["fileCat"] in ["profileImage", "bg_image"]:
             blob = bucket.blob(f"uploads/{str(current_user.id)}/user/{filename}")
         else:
             blob = bucket.blob(f"uploads/{str(current_user.id)}/{filename}")
@@ -39,7 +39,11 @@ def upload_file():
             match request.form.get("fileCat"):
                 case "profileImage":
                     Users.update(current_user.id, {
-                        "key": ["image_url", blob.public_url]
+                        "image_url": blob.public_url
+                    })
+                case "bg_image":
+                    Users.update(current_user.id, {
+                        "bg_image_url": blob.public_url
                     })
         os.remove(filename)
     except KeyError or BaseException or Exception as e:
