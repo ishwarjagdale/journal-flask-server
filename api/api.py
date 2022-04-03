@@ -41,16 +41,17 @@ def new_post():
 
 @api.route("/posts")
 def get_posts():
-    posts = [p.json(False) for p in Posts.query.join(Posts.author_rel).order_by(db.desc(Posts.date_published)).all()]
+    posts = [p.json(False) for p in Posts.query.filter_by(draft=False).join(Posts.author_rel).order_by(db.desc(Posts.date_published)).all()]
     return jsonify({"resp_code": 200, "response": posts})
 
 
 @api.route("/search")
 def search():
     query = request.args["query"]
-    posts = [p.json(False) for p in Posts.query.join(Posts.author_rel).filter(Posts.title.ilike(f"%{query}%") | Posts.tags.ilike(f"%{query}%")
-                                                                              ).order_by(db.desc(Posts.date_published
-                                                                                                 )).all()]
+    posts = [p.json(False) for p in
+             Posts.query.join(Posts.author_rel).filter(Posts.draft.__eq__(False) and (Posts.title.ilike(f"%{query}%") | Posts.tags.ilike(f"%{query}%"))
+                                                       ).order_by(db.desc(Posts.date_published
+                                                                          )).all()]
     return jsonify({"resp_code": 200, "response": posts})
 
 
@@ -61,6 +62,45 @@ def get_post(post_id):
         return jsonify({"resp_code": 200, "response": post})
     else:
         return jsonify({"resp_code": 404, "response": "noPostFound"})
+
+
+@api.route("/post/<post_id>/edit", methods=["GET", "POST", "DELETE", "PATCH"])
+@login_required
+def del_post(post_id):
+    post = Posts.get_post(post_id, every=True)
+    if not post:
+        return jsonify({"resp_code": 404, "response": "Not Found"})
+    if post.author == current_user.id:
+        if request.method == "GET":
+            return jsonify({"resp_code": 200, "response": post.json(True)})
+        if request.method == "DELETE":
+            try:
+                db.session.delete(post)
+                db.session.commit()
+            except SQLAlchemyError or Exception as e:
+                print(e)
+                return jsonify({"resp_code": 400, "response": e})
+            else:
+                return jsonify({"resp_code": 200, "response": True})
+        if request.method == "POST":
+            data = dict(request.get_json())
+            data["thumbnail_image"] = data["thumbnailURL"]
+            data.pop("thumbnailURL")
+            data.pop("author")
+            try:
+                for key in data.keys():
+                    setattr(post, key, data[key])
+                db.session.commit()
+            except SQLAlchemyError or Exception as e:
+                print(e)
+                return jsonify({"resp_code": 400, "response": e})
+            else:
+                return jsonify({"resp_code": 200, "response": True})
+        if request.method == "PATCH":
+            post.draft = True
+            db.session.commit()
+            return jsonify({"resp_code": 200, "response": True})
+    return jsonify({"resp_code": 401, "response": "Unauthorized access"})
 
 
 @api.route("/post/<post_id>/like")

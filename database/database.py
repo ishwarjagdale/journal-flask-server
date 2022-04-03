@@ -113,6 +113,7 @@ class Posts(db.Model):
     likes = db.Column(db.Integer, default=0)
     character_count = db.Column(db.Integer, default=default_character_count)
     word_count = db.Column(db.Integer, default=0)
+    draft = db.Column(db.Boolean, default=False)
 
     def json(self, complete=False):
         post = {
@@ -120,6 +121,7 @@ class Posts(db.Model):
             "title": self.title,
             "subtitle": self.subtitle,
             "author": {
+                "id": self.author_rel.id,
                 "url": f"/@{self.author_rel.username}",
                 "name": self.author_rel.name,
                 "img": self.author_rel.image_url
@@ -129,7 +131,8 @@ class Posts(db.Model):
                 "read_time": self.word_count,
                 "tag": self.tags,
                 "likes": self.likes,
-                "response": self.views
+                "response": self.views,
+                "draft": self.draft
             },
             "thumbnail": {
                 "url": self.thumbnail_image,
@@ -142,11 +145,16 @@ class Posts(db.Model):
         return post
 
     @staticmethod
-    def get_post(post_id):
-        post = Posts.query.filter_by(id=post_id).first()
-        post.views += 1
-        db.session.commit()
-        return post if post is not None else False
+    def get_post(post_id, every=False):
+        if every:
+            post = Posts.query.filter_by(id=post_id).first()
+        else:
+            post = Posts.query.filter_by(id=post_id, draft=False).first()
+        if post:
+            post.views += 1
+            db.session.commit()
+            return post
+        return False
 
     def view(self):
         self.views += 1
