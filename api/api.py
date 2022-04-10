@@ -16,7 +16,7 @@ def home():
 @api.route("/user/<username>")
 def get_user(username):
     user = Users.get_user_by_username(username).json(complete=True)
-    posts = Users.query.with_entities(Posts.id).filter_by(author=user["id"]).all()
+    posts = Users.query.with_entities(Posts.id).filter_by(author=user["id"], draft=False).all()
     print(posts)
     user["posts"] = [x[0] for x in posts]
     user["followers"] = Followers.get_count(user["id"])
@@ -35,13 +35,15 @@ def new_post():
         thumbnail_image=data["thumbnailURL"],
         tags=data["tags"],
         word_count=data["wordCount"],
+        draft=data["draft"]
     )
     return jsonify({"resp_code": 200 if status[0] else 400, "response": status[1]})
 
 
 @api.route("/posts")
 def get_posts():
-    posts = [p.json(False) for p in Posts.query.filter_by(draft=False).join(Posts.author_rel).order_by(db.desc(Posts.date_published)).all()]
+    posts = [p.json(False) for p in
+             Posts.query.filter_by(draft=False).join(Posts.author_rel).order_by(db.desc(Posts.date_published)).all()]
     return jsonify({"resp_code": 200, "response": posts})
 
 
@@ -49,25 +51,40 @@ def get_posts():
 def search():
     query = request.args["query"]
     posts = [p.json(False) for p in
-             Posts.query.join(Posts.author_rel).filter(Posts.draft.__eq__(False) and (Posts.title.ilike(f"%{query}%") | Posts.tags.ilike(f"%{query}%"))
-                                                       ).order_by(db.desc(Posts.date_published
-                                                                          )).all()]
+             Posts.query.join(Posts.author_rel).filter(
+                 Posts.draft.__eq__(False) and (Posts.title.ilike(f"%{query}%") | Posts.tags.ilike(f"%{query}%"))
+                 ).order_by(db.desc(Posts.date_published
+                                    )).all()]
     return jsonify({"resp_code": 200, "response": posts})
 
 
 @api.route("/post/<post_id>")
 def get_post(post_id):
-    post = Posts.get_post(post_id).json(True)
+    post = Posts.get_post(post_id)
     if post:
-        return jsonify({"resp_code": 200, "response": post})
+        if post.draft:
+            return jsonify({"resp_code": 401, "response": "Unauthorized access"})
+        return jsonify({"resp_code": 200, "response": post.json(True)})
     else:
-        return jsonify({"resp_code": 404, "response": "noPostFound"})
+        return jsonify({"resp_code": 404, "response": "Error: Content not found"})
+
+
+@api.route("/drafts/<userID>", methods=["GET"])
+@login_required
+def get_drafts(userID):
+    posts = Posts.query.filter_by(author=userID, draft=True).all()
+    drafts = []
+    print(posts)
+    if posts:
+        for i in posts:
+            drafts.append(i.json())
+    return jsonify({"resp_code": 200, "response": drafts})
 
 
 @api.route("/post/<post_id>/edit", methods=["GET", "POST", "DELETE", "PATCH"])
 @login_required
 def del_post(post_id):
-    post = Posts.get_post(post_id, every=True)
+    post = Posts.get_post(post_id)
     if not post:
         return jsonify({"resp_code": 404, "response": "Not Found"})
     if post.author == current_user.id:
@@ -97,7 +114,7 @@ def del_post(post_id):
             else:
                 return jsonify({"resp_code": 200, "response": True})
         if request.method == "PATCH":
-            post.draft = True
+            post.draft = not post.draft
             db.session.commit()
             return jsonify({"resp_code": 200, "response": True})
     return jsonify({"resp_code": 401, "response": "Unauthorized access"})
@@ -149,7 +166,9 @@ def saved():
         else:
             try:
                 for _id in ids:
-                    stories.append(Posts.get_post(_id).json())
+                    p = Posts.get_post(_id)
+                    if not p.draft:
+                        stories.append(p.json())
             except SQLAlchemyError as e:
                 print(e)
         finally:

@@ -145,11 +145,8 @@ class Posts(db.Model):
         return post
 
     @staticmethod
-    def get_post(post_id, every=False):
-        if every:
-            post = Posts.query.filter_by(id=post_id).first()
-        else:
-            post = Posts.query.filter_by(id=post_id, draft=False).first()
+    def get_post(post_id):
+        post = Posts.query.filter_by(id=post_id).first()
         if post:
             post.views += 1
             db.session.commit()
@@ -165,12 +162,12 @@ class Posts(db.Model):
         db.session.commit()
 
     @staticmethod
-    def new_post(title, subtitle, content, author, thumbnail_image, tags, word_count):
+    def new_post(title, subtitle, content, author, thumbnail_image, tags, word_count, draft):
         try:
             post = Posts(title=title, subtitle=subtitle, author=author, content=content,
                          thumbnail_image=thumbnail_image, tags=tags, word_count=word_count,
                          date_published=datetime.datetime.now(),
-                         date_modified=datetime.datetime.now())
+                         date_modified=datetime.datetime.now(), draft=draft)
             db.session.add(post)
             db.session.commit()
         except SQLAlchemyError as e:
