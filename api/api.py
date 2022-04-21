@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from database.database import Users, Posts, db, Followers, SQLAlchemyError
+from database.database import Users, Posts, db, Followers, Messages, SQLAlchemyError
 from flask_session import Session
 from flask_login import login_required, current_user
 
@@ -177,3 +177,17 @@ def saved():
             else:
                 print("not a user")
     return jsonify({"resp_code": 200, "response": stories})
+
+
+@api.route("/contact", methods=["POST"])
+def contact():
+    try:
+        data = dict(request.get_json())
+        query = Messages()
+        for key in data:
+            setattr(query, key, data[key])
+        db.session.add(query)
+        db.session.commit()
+    except SQLAlchemyError or Exception as e:
+        return jsonify({"resp_code": 500, "response": e})
+    return jsonify({"resp_code": 200, "response": True})

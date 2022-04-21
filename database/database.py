@@ -228,3 +228,11 @@ class Followers(db.Model):
             return None
         else:
             return do_follow
+
+
+class Messages(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    email = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.String(1000), nullable=False)
+    bug_report = db.Column(db.Boolean, nullable=False)
