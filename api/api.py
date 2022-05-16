@@ -15,12 +15,15 @@ def home():
 
 @api.route("/user/<username>")
 def get_user(username):
-    user = Users.get_user_by_username(username).json(complete=True)
-    posts = Users.query.with_entities(Posts.id).filter_by(author=user["id"], draft=False).all()
-    print(posts)
-    user["posts"] = [x[0] for x in posts]
-    user["followers"] = Followers.get_count(user["id"])
-    return jsonify({"resp_code": 200, "response": user})
+    user = Users.get_user_by_username(username)
+    if user:
+        user = user.json(complete=True)
+        posts = Users.query.with_entities(Posts.id).filter_by(author=user["id"], draft=False).all()
+        print(posts)
+        user["posts"] = [x[0] for x in posts]
+        user["followers"] = Followers.get_count(user["id"])
+        return jsonify({"resp_code": 200, "response": user})
+    return jsonify({"resp_code": 404, "response": "user not found"})
 
 
 @api.route("/new-story", methods=["POST"])
@@ -69,10 +72,10 @@ def get_post(post_id):
         return jsonify({"resp_code": 404, "response": "Error: Content not found"})
 
 
-@api.route("/drafts/<userID>", methods=["GET"])
+@api.route("/drafts/<user_id>", methods=["GET"])
 @login_required
-def get_drafts(userID):
-    posts = Posts.query.filter_by(author=userID, draft=True).all()
+def get_drafts(user_id):
+    posts = Posts.query.filter_by(author=user_id, draft=True).all()
     drafts = []
     print(posts)
     if posts:
@@ -171,11 +174,6 @@ def saved():
                         stories.append(p.json())
             except SQLAlchemyError as e:
                 print(e)
-        finally:
-            if current_user:
-                print(current_user.email)
-            else:
-                print("not a user")
     return jsonify({"resp_code": 200, "response": stories})
 
 

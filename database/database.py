@@ -24,8 +24,7 @@ class Users(UserMixin, db.Model):
     bio = db.Column(db.String(200))
     image_url = db.Column(db.String(500), default="https://storage.googleapis.com/dotted-tube-339407.appspot.com"
                                                   "/assets/img/user.png")
-    bg_image_url = db.Column(db.String(500), default="https://storage.googleapis.com/dotted-tube-339407.appspot.com"
-                                                     "/assets/img/user.png")
+    bg_image_url = db.Column(db.String(500), default=None)
     is_authenticated = db.Column(db.Boolean, default=True)
     is_active = db.Column(db.Boolean, default=True)
 
@@ -67,7 +66,8 @@ class Users(UserMixin, db.Model):
 
     @staticmethod
     def get_user_by_username(username):
-        return Users.query.filter_by(username=username).first()
+        user = Users.query.filter_by(username=username).first()
+        return user if user else False
 
     @staticmethod
     def update(user_id: int, settings: dict):
