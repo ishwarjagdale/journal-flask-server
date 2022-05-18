@@ -191,6 +191,14 @@ class Posts(db.Model):
         else:
             return True
 
+    @staticmethod
+    def populars():
+        try:
+            return Posts.query.filter_by(draft=False).order_by(db.desc(Posts.views)).limit(3).all()
+        except SQLAlchemyError as e:
+            print(e)
+            return False
+
 
 class Followers(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)

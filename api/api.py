@@ -189,3 +189,9 @@ def contact():
     except SQLAlchemyError or Exception as e:
         return jsonify({"resp_code": 500, "response": e})
     return jsonify({"resp_code": 200, "response": True})
+
+
+@api.route("/populars", methods=["GET"])
+def get_populars():
+    pops = Posts.populars()
+    return jsonify({"resp_code": 200, "response": [i.json() for i in pops] if pops else []})
