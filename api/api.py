@@ -45,6 +45,15 @@ def new_post():
 
 @api.route("/posts")
 def get_posts():
+    args = request.args.to_dict()
+    if "tag" in args:
+        print(args["tag"])
+        posts = [p.json(False) for p in
+                 Posts.query.join(Posts.author_rel).filter(Posts.tags.ilike(f"%{args['tag']}%") & Posts.draft.__eq__(False))
+                     .order_by(db.desc(Posts.date_published
+                                       )).all()]
+        print(*posts)
+        return jsonify({"resp_code": 200, "response": posts})
     posts = [p.json(False) for p in
              Posts.query.filter_by(draft=False).join(Posts.author_rel).order_by(db.desc(Posts.date_published)).all()]
     return jsonify({"resp_code": 200, "response": posts})
@@ -55,9 +64,9 @@ def search():
     query = request.args["query"]
     posts = [p.json(False) for p in
              Posts.query.join(Posts.author_rel).filter(
-                 Posts.draft.__eq__(False) and (Posts.title.ilike(f"%{query}%") | Posts.tags.ilike(f"%{query}%"))
-                 ).order_by(db.desc(Posts.date_published
-                                    )).all()]
+                 Posts.draft.__eq__(False) & (Posts.title.ilike(f"%{query}%") | Posts.tags.ilike(f"%{query}%"))
+             ).order_by(db.desc(Posts.date_published
+                                )).all()]
     return jsonify({"resp_code": 200, "response": posts})
 
 
@@ -195,3 +204,12 @@ def contact():
 def get_populars():
     pops = Posts.populars()
     return jsonify({"resp_code": 200, "response": [i.json() for i in pops] if pops else []})
+
+
+@api.route("/tags", methods=["GET"])
+def get_tags():
+    tags = []
+    for i in db.session.query(Posts.tags).filter(~Posts.draft).order_by(db.desc(Posts.date_modified)).all():
+        tags += i[0].split(" ")
+    print(tags)
+    return jsonify({"resp_code": 200, "response": tags})
